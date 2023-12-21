@@ -1,0 +1,57 @@
+Sub GönderButonuTiklandi()
+    Dim ws As Worksheet
+    Dim mailAdresi As String
+    Dim mailKonu As String
+    Dim mailMesaj As String
+    Dim fromMail As String
+    Dim ccMail As String
+    Dim nameTag As String
+    Dim companyTag As String
+    Dim imageTag As String
+    Dim signature As String
+    
+
+    Set ws = ThisWorkbook.Sheets("Sayfa1")
+    mailKonu = ws.Range("G3").Value
+    mailMesaj = ws.Range("G4").Value
+    fromMail = ws.Range("G1").Value
+    ccMail = ws.Range("G2").Value
+    imageTag = ws.Range("G5").Value
+    signature = ws.Range("G6").Value
+
+    Dim onay As VbMsgBoxResult
+    onay = MsgBox("Tüm adreslere mail gönderilecek, onaylıyor musunuz?" & vbCrLf & vbCrLf & " NOT: Önce Test Maili Gönderin.", vbYesNo + vbQuestion, "Onay")
+
+    If onay = vbNo Then
+        Exit Sub
+    End If
+
+    Dim olApp As Object
+    Set olApp = CreateObject("Outlook.Application")
+
+    For i = 2 To 100
+        mailAdresi = ws.Range("D" & i).Value
+        nameTag = "Merhabalar " & ws.Range("C" & i).Value
+        companyTag = ws.Range("B" & i).Value
+
+        If Not IsEmpty(mailAdresi) Then
+            Call EpostaGonder(olApp, fromMail, mailAdresi, ccMail, mailKonu, mailMesaj, nameTag, companyTag, imageTag, signature)
+        End If
+    Next i
+End Sub
+
+Sub EpostaGonder(olApp As Object, Sender As String, ToMail As String, CC As String, Title As String, Content As String, nameTag As String, companyTag As String, imageTag As String, signature As String)
+    Dim olMail As Object
+    Set olMail = olApp.CreateItem(0)
+    olMail.SentOnBehalfOfName = Sender
+    olMail.To = ToMail
+    olMail.CC = CC
+    olMail.Subject = Title & " - " & companyTag
+    olMail.Body = nameTag & "," & vbCrLf & vbCrLf & Content & vbCrLf & vbCrLf & vbCrLf & vbCrLf & signature
+    'olMail.HTMLBody = Content & "<br> Bilgilerinize sunar, değerli dönüşlerinizi bekleriz. <img src='C:\Users\tekni\Desktop\BERKE İLKYAZ\GENEL\FOTOĞRAFLAR\e-care.png'>" & olMail.HTMLBody
+    olMail.Attachments.Add imageTag
+    'olMail.Display
+    olMail.Send
+    Application.Wait Now + TimeValue("00:00:40")
+    Set olMail = Nothing
+End Sub
