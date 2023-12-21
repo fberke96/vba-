@@ -1,0 +1,429 @@
+Private Sub Workbook_Open()
+bakimtakip
+verilenteklifler
+verilecekteklifler
+aranmagerekenler
+yapilacaklar
+End Sub
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    If Not Intersect(Target, Me.Range("E1:E1000")) Is Nothing Or Not Intersect(Target, Me.Range("D1:D1000")) Is Nothing Then
+        bakimtakip
+        verilenteklifler
+        verilecekteklifler
+        aranmagerekenler
+        yapilacaklar
+    End If
+End Sub
+
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+
+Sub bakimtakip()
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets("BAKIM TAKİP")
+    
+    Dim tDay As Date
+    Dim days As Integer
+    Dim dateDiff As Integer
+    Dim companyTag As String
+    Dim carID As String
+    Dim serialID As String
+    Dim mail As Integer
+    Dim mailBody As String
+    Dim subBody As String
+    Dim LastRow As Integer
+    
+    Dim check As Integer
+    check = 0
+    
+    mailBody = "Bakım süresine 3 gün kalanların listesi aşağıdaki gibidir:" & vbCrLf & vbCrLf
+    subBody = "Araç Bakım Takip Bildirisi"
+    
+    LastRow = ws.Cells(1000, "D").End(xlUp).Row
+    
+    For i = 3 To LastRow
+    
+        If IsEmpty(ws.Cells(i, 4).Value) And IsEmpty(ws.Cells(i, 5).Value) Then
+            ws.Cells(i, 6).Interior.ColorIndex = xlNone
+            ws.Range("G" & i).Value = 0
+        End If
+
+
+        If Not IsEmpty(ws.Cells(i, 4).Value) And Not IsEmpty(ws.Cells(i, 5).Value) Then
+        
+            companyTag = ws.Range("A" & i).Value
+            carID = ws.Range("B" & i).Value
+            serialID = ws.Range("C" & i).Value
+            mail = ws.Range("G" & i).Value
+        
+            tDay = ws.Range("D" & i).Value
+            days = ws.Range("E" & i).Value
+            dateDiff = TarihFarkiHesapla(tDay, days)
+            ws.Range("F" & i).Value = dateDiff
+            
+            If dateDiff >= 1 Then
+                ws.Cells(i, 6).Interior.Color = RGB(0, 255, 0)
+            End If
+            
+            If dateDiff = 0 Then
+                ws.Cells(i, 6).Interior.Color = RGB(255, 127, 0)
+            End If
+            
+            If dateDiff < 0 Then
+                ws.Cells(i, 6).Interior.Color = RGB(255, 0, 0)
+            End If
+        
+            If dateDiff <= 3 And mail = 0 Then
+                check = 1
+                mailBody = mailBody & companyTag & ", " & carID & ", " & serialID & vbCrLf & vbCrLf
+                ws.Range("G" & i).Value = 1
+            End If
+            
+            
+            
+        End If
+    Next i
+    
+    If check = 1 Then
+        EpostaGonder mailBody, subBody
+        check = 0
+    End If
+    
+End Sub
+
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+
+Sub verilenteklifler()
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets("VERİLEN TEKLİF TAKİBİ")
+    
+    Dim tDay As Date
+    Dim days As Integer
+    Dim dateDiff As Integer
+    Dim companyTag As String
+    Dim pName As String
+    Dim carID As String
+    Dim mail As Integer
+    Dim mailBody As String
+    Dim subBody As String
+    Dim LasRow As Integer
+    
+    
+    Dim check As Integer
+    check = 0
+    
+    mailBody = "Verilmiş tekliflerden takip zamanı gelenlerin listesi aşağıdaki gibidir:" & vbCrLf & vbCrLf
+    subBody = "Verilmiş Teklif Takip Bildirisi"
+    
+    LastRow = ws.Cells(1000, "D").End(xlUp).Row
+    
+    For i = 3 To LastRow
+    
+        If IsEmpty(ws.Cells(i, 4).Value) And IsEmpty(ws.Cells(i, 5).Value) Then
+            ws.Cells(i, 6).Interior.ColorIndex = xlNone
+            ws.Range("G" & i).Value = 0
+        End If
+
+        If Not IsEmpty(ws.Cells(i, 4).Value) And Not IsEmpty(ws.Cells(i, 5).Value) Then
+            companyTag = ws.Range("A" & i).Value
+            pName = ws.Range("B" & i).Value
+            carID = ws.Range("C" & i).Value
+            mail = ws.Range("G" & i).Value
+        
+            tDay = ws.Range("D" & i).Value
+            days = ws.Range("E" & i).Value
+            dateDiff = TarihFarkiHesapla(tDay, days)
+            '____RENK__________
+            If dateDiff >= 1 Then
+                ws.Cells(i, 6).Interior.Color = RGB(0, 255, 0)
+            End If
+            
+            If dateDiff = 0 Then
+                ws.Cells(i, 6).Interior.Color = RGB(255, 127, 0)
+            End If
+            
+            If dateDiff < 0 Then
+                ws.Cells(i, 6).Interior.Color = RGB(255, 0, 0)
+            End If
+            
+            '____MAİL__________
+            If dateDiff <= 0 And mail = 0 Then
+                check = 1
+                mailBody = mailBody & companyTag & ", " & pName & ", " & carID & vbCrLf & vbCrLf
+                ws.Range("G" & i).Value = 1
+            End If
+            
+        End If
+    Next i
+    
+    If check = 1 Then
+        EpostaGonder mailBody, subBody
+        check = 0
+    End If
+    
+End Sub
+
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+
+Sub verilecekteklifler()
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets("VERİLECEK TEKLİF TAKİBİ")
+    
+    Dim tDay As Date
+    Dim days As Integer
+    Dim dateDiff As Integer
+    Dim companyTag As String
+    Dim pName As String
+    Dim carID As String
+    Dim mail As Integer
+    Dim mailBody As String
+    Dim subBody As String
+    Dim LastRow As Integer
+    
+    Dim check As Integer
+    check = 0
+    
+    mailBody = "Teklif verilme zamanı gelenlerin listesi aşağıdaki gibidir:" & vbCrLf & vbCrLf
+    subBody = "Verilecek Teklif Takip Bildirisi"
+    
+    LastRow = ws.Cells(1000, "D").End(xlUp).Row
+    
+    For i = 3 To LastRow
+    
+        If IsEmpty(ws.Cells(i, 4).Value) And IsEmpty(ws.Cells(i, 5).Value) Then
+            ws.Cells(i, 6).Interior.ColorIndex = xlNone
+            ws.Range("G" & i).Value = 0
+        End If
+
+        If Not IsEmpty(ws.Cells(i, 4).Value) And Not IsEmpty(ws.Cells(i, 5).Value) Then
+            companyTag = ws.Range("A" & i).Value
+            pName = ws.Range("B" & i).Value
+            carID = ws.Range("C" & i).Value
+            mail = ws.Range("G" & i).Value
+        
+            tDay = ws.Range("D" & i).Value
+            days = ws.Range("E" & i).Value
+            dateDiff = TarihFarkiHesapla(tDay, days)
+             '____RENK__________
+             If dateDiff >= 1 Then
+                ws.Cells(i, 6).Interior.Color = RGB(0, 255, 0)
+            End If
+            
+            If dateDiff = 0 Then
+                ws.Cells(i, 6).Interior.Color = RGB(255, 127, 0)
+            End If
+            
+            If dateDiff < 0 Then
+                ws.Cells(i, 6).Interior.Color = RGB(255, 0, 0)
+            End If
+            '____MAİL__________
+            If dateDiff <= 0 And mail = 0 Then
+                check = 1
+                mailBody = mailBody & companyTag & ", " & pName & ", " & carID & vbCrLf
+                ws.Range("G" & i).Value = 1
+            End If
+            
+        End If
+    Next i
+    
+    If check = 1 Then
+        EpostaGonder mailBody, subBody
+        check = 0
+    End If
+    
+End Sub
+
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+
+Sub aranmagerekenler()
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets("ARAMA TAKİBİ")
+    
+    Dim tDay As Date
+    Dim days As Integer
+    Dim dateDiff As Integer
+    Dim companyTag As String
+    Dim pName As String
+    Dim carID As String
+    Dim mail As Integer
+    Dim mailBody As String
+    Dim subBody As String
+    Dim LastRow As Integer
+    
+    Dim check As Integer
+    check = 0
+    
+    mailBody = "Aranma zamanı gelenlerin listesi aşağıdaki gibidir:" & vbCrLf & vbCrLf
+    subBody = "Arama Takip Bildirisi"
+    
+    LastRow = ws.Cells(1000, "D").End(xlUp).Row
+    
+    For i = 3 To LastRow
+    
+        If IsEmpty(ws.Cells(i, 4).Value) And IsEmpty(ws.Cells(i, 5).Value) Then
+            ws.Cells(i, 6).Interior.ColorIndex = xlNone
+            ws.Range("G" & i).Value = 0
+        End If
+
+        If Not IsEmpty(ws.Cells(i, 4).Value) And Not IsEmpty(ws.Cells(i, 5).Value) Then
+            companyTag = ws.Range("A" & i).Value
+            pName = ws.Range("B" & i).Value
+            carID = ws.Range("C" & i).Value
+            mail = ws.Range("G" & i).Value
+        
+            tDay = ws.Range("D" & i).Value
+            days = ws.Range("E" & i).Value
+            dateDiff = TarihFarkiHesapla(tDay, days)
+            
+            '____RENK__________
+             If dateDiff >= 1 Then
+                ws.Cells(i, 6).Interior.Color = RGB(0, 255, 0)
+            End If
+            
+            If dateDiff = 0 Then
+                ws.Cells(i, 6).Interior.Color = RGB(255, 127, 0)
+            End If
+            
+            If dateDiff < 0 Then
+                ws.Cells(i, 6).Interior.Color = RGB(255, 0, 0)
+            End If
+            '____MAİL__________
+            If dateDiff <= 0 And mail = 0 Then
+                check = 1
+                mailBody = mailBody & companyTag & ", " & pName & ", " & carID & vbCrLf
+                ws.Range("G" & i).Value = 1
+            End If
+            
+        End If
+    Next i
+    
+    If check = 1 Then
+        EpostaGonder mailBody, subBody
+        check = 0
+    End If
+    
+End Sub
+
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+
+Sub yapilacaklar()
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets("YAPILACAKLAR LİSTESİ")
+    
+    Dim tDay As Date
+    Dim days As Integer
+    Dim dateDiff As Integer
+    Dim companyTag As String
+    Dim carID As String
+    Dim serialID As String
+    Dim mail As Integer
+    Dim mailBody As String
+    Dim subBody As String
+    Dim LastRow As Integer
+    
+    Dim check As Integer
+    check = 0
+    
+    mailBody = "Yapılacaklar listeniz aşağıdaki gibidir:" & vbCrLf & vbCrLf
+    subBody = "Yapılacaklar Listesi Bildirisi"
+    
+    LastRow = ws.Cells(1000, "D").End(xlUp).Row
+    
+    For i = 3 To LastRow
+    
+        If IsEmpty(ws.Cells(i, 4).Value) And IsEmpty(ws.Cells(i, 5).Value) Then
+            ws.Cells(i, 6).Interior.ColorIndex = xlNone
+            ws.Range("G" & i).Value = 0
+        End If
+
+        If Not IsEmpty(ws.Cells(i, 4).Value) And Not IsEmpty(ws.Cells(i, 5).Value) Then
+            companyTag = ws.Range("A" & i).Value
+            pName = ws.Range("B" & i).Value
+            carID = ws.Range("C" & i).Value
+            mail = ws.Range("G" & i).Value
+        
+            tDay = ws.Range("D" & i).Value
+            days = ws.Range("E" & i).Value
+            dateDiff = TarihFarkiHesapla(tDay, days)
+            
+            '____RENK__________
+             If dateDiff >= 1 Then
+                ws.Cells(i, 6).Interior.Color = RGB(0, 255, 0)
+            End If
+            
+            If dateDiff = 0 Then
+                ws.Cells(i, 6).Interior.Color = RGB(255, 127, 0)
+            End If
+            
+            If dateDiff < 0 Then
+                ws.Cells(i, 6).Interior.Color = RGB(255, 0, 0)
+            End If
+            '____MAİL__________
+            If dateDiff <= 0 And mail = 0 Then
+                check = 1
+                mailBody = mailBody & companyTag & ", " & pName & ", " & carID & vbCrLf
+                ws.Range("G" & i).Value = 1
+            End If
+            
+        End If
+    Next i
+    
+    If check = 1 Then
+        EpostaGonder mailBody, subBody
+        check = 0
+    End If
+    
+End Sub
+
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+
+Function TarihFarkiHesapla(tarihA As Date, gunSayisi As Integer) As Integer
+
+    Dim sonrakiTarih As Date
+    Dim bugunkuTarih As Date
+    Dim gunFarki As Integer
+    
+    sonrakiTarih = DateAdd("d", gunSayisi, tarihA)
+    bugunkuTarih = Date
+    gunFarki = dateDiff("d", bugunkuTarih, sonrakiTarih)
+    
+    TarihFarkiHesapla = gunFarki
+    
+End Function
+
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+
+
+Sub EpostaGonder(mailBody As String, subBody As String)
+
+    Dim olApp As Object
+    Dim olMail As Object
+
+    On Error Resume Next
+    Set olApp = GetObject(, "Outlook.Application")
+    On Error GoTo 0
+
+    If olApp Is Nothing Then
+        Set olApp = CreateObject("Outlook.Application")
+    End If
+
+    Set olMail = olApp.CreateItem(0)
+
+    olMail.Subject = subBody
+    olMail.SentOnBehalfOfName = "berkeilkyaz@teknikmakine.com"
+    olMail.To = "erdemertekin@teknikmakine.com"
+    'olMail.To = "alici1@example.com, alici2@example.com, alici3@example.com"
+    olMail.Body = mailBody
+    olMail.Send
+    Set olMail = Nothing
+    Set olApp = Nothing
+    Application.Wait Now + TimeValue("00:00:10")
+    
+End Sub
